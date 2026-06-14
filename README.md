@@ -1,35 +1,35 @@
-# BteloDB — Release & 公开镜像
+# BteloDB — Releases & Public Image
 
-**BteloDB** 是用 Rust 写的 **S3-First 流批一体湖仓数据库**：一个引擎统一
-**流（Kafka 式追加 + 实时订阅）+ SQL（S3 Parquet + DataFusion）+ 检索（扫描式）**，
-冷数据全部落开放格式 Parquet on S3/R2。
+**BteloDB** is an **S3-first streaming + batch lakehouse database** written in Rust: one engine that unifies
+**streams (Kafka-style append + live subscriptions) + SQL (S3 Parquet + DataFusion) + search (scan-based)**,
+with all cold data stored as open-format Parquet on S3/R2.
 
-本仓库（public）发布**数据面**的官方 Docker 镜像 —— 任何人都能 `docker run` 在本地起一套完整的 BteloDB。
+This (public) repository publishes the official Docker image of the **data plane** — anyone can `docker run` a complete BteloDB locally.
 
-> 商业化**控制面 Console**（多租户云平台 Dashboard）不在本镜像内，也不公开发布。
+> The commercial **Console** control plane (multi-tenant cloud dashboard) is not included in this image and is not published publicly.
 
 ---
 
-## 快速开始
+## Quick start
 
 ```bash
-# 拉取并启动（数据默认落容器内 ~/.btelo-db）
+# Pull and run (data defaults to ~/.btelo-db inside the container)
 docker run --rm -p 4382:4382 -p 4380:4380 -p 4383:4383 -p 4384:4384 \
   ghcr.io/btelolabs/btelo-db-release:latest
 ```
 
-启动后四个协议入口同时可用：
+All four protocol entry points are available at once:
 
-| 端口 | 协议 | 用途 |
+| Port | Protocol | Use |
 |---|---|---|
-| `4382` | HTTP + JSON | `/v1/*` API · 浏览器打开 **`http://localhost:4382/studio`**（内置管理控制台 Studio） |
-| `4380` | Redis (RESP2) | `redis-cli -p 4380` 原生互通（「不会丢数据的 Redis」） |
-| `4383` | Postgres (v3) | `psql -h localhost -p 4383` SELECT/INSERT 直连 |
-| `4384` | Kafka | Produce/Fetch（topic = 表，一表一序） |
+| `4382` | HTTP + JSON | `/v1/*` API · open **`http://localhost:4382/studio`** in a browser (the built-in admin console, Studio) |
+| `4380` | Redis (RESP2) | native `redis-cli -p 4380` ("a Redis that doesn't lose data") |
+| `4383` | Postgres (v3) | `psql -h localhost -p 4383`, SELECT/INSERT directly |
+| `4384` | Kafka | Produce/Fetch (topic = table, one log per table) |
 
-打开 **http://localhost:4382/studio** 即可在浏览器里建表、写流、跑 SQL、看实时订阅与架构图。
+Open **http://localhost:4382/studio** to create tables, write streams, run SQL, and watch live subscriptions and the architecture map — all in the browser.
 
-### 持久化到宿主机
+### Persist to the host
 
 ```bash
 docker run --rm -p 4382:4382 \
@@ -37,7 +37,7 @@ docker run --rm -p 4382:4382 \
   ghcr.io/btelolabs/btelo-db-release:latest
 ```
 
-### 接真 S3 / Cloudflare R2（冷数据上对象存储）
+### Connect real S3 / Cloudflare R2 (cold data on object storage)
 
 ```bash
 docker run --rm -p 4382:4382 \
@@ -47,37 +47,37 @@ docker run --rm -p 4382:4382 \
   ghcr.io/btelolabs/btelo-db-release:latest
 ```
 
-无 S3 凭据时默认用本地对象存储（`~/.btelo-db`），开箱即用。
+Without S3 credentials it defaults to local object storage (`~/.btelo-db`) and works out of the box.
 
 ---
 
-## 五分钟试一下
+## Try it in five minutes
 
 ```bash
-# 1) 建表
+# 1) Create a table
 curl -X PUT localhost:4382/v1/tables/events \
   -H 'authorization: Bearer tnt_demo_pro'
 
-# 2) 追加文档
+# 2) Append documents
 curl -X POST localhost:4382/v1/tables/events/docs \
   -H 'authorization: Bearer tnt_demo_pro' -H 'content-type: application/json' \
   -d '[{"user":"u1","event":"click","n":1},{"user":"u2","event":"view","n":2}]'
 
-# 3) SQL 查询
+# 3) Query with SQL
 curl -X POST localhost:4382/v1/query \
   -H 'authorization: Bearer tnt_demo_pro' -H 'content-type: application/json' \
   -d '{"sql":"SELECT event, COUNT(*) c FROM events GROUP BY event ORDER BY c DESC"}'
 ```
 
-> `tnt_demo_pro` 是 dev token（本地测试态）。生产用 JWT（`BTELO_JWT_SECRET`）。
+> `tnt_demo_pro` is a dev token (for local testing). Use a JWT in production (`BTELO_JWT_SECRET`).
 
 ---
 
-## 版本
+## Versions
 
-各版本镜像与发行说明见本仓库的 [Releases](../../releases)。
-镜像标签：`:latest` 与 `:vX.Y.Z`（与 Release 一一对应）。
+See this repository's [Releases](../../releases) for per-version images and release notes.
+Image tags: `:latest` and `:vX.Y.Z` (one-to-one with each Release).
 
-## 反馈
+## Feedback
 
-镜像与本仓库是发布产物；问题与建议欢迎在本仓库提 Issue。
+The image and this repository are release artifacts; questions and suggestions are welcome as Issues here.
